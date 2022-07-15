@@ -36,7 +36,7 @@ class AddItemViewController: UIViewController {
                 // Schedual notif
                 let content = UNMutableNotificationContent()
                 content.title = name.text!
-                content.subtitle = "The deadline for this item has reached!"
+                content.body = "The deadline for this item has reached!"
                 content.sound = UNNotificationSound.default
                 // Trigger
                 uuid = UUID().uuidString
