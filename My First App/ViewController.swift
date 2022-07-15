@@ -1,0 +1,110 @@
+//
+//  ViewController.swift
+//  My First App
+//
+//  Created by Aiden Forrest on 29/12/2021.
+//
+
+import UIKit
+import Foundation
+
+class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UITableViewDragDelegate {
+
+    @IBOutlet weak var titleText: UILabel!
+    @IBOutlet weak var tableView: UITableView!
+    
+    func toString(_ value: Any?) -> String {
+      return String(describing: value ?? "")
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        // Do any additional setup after loading the view.
+        
+        // Check if user is first time
+        let firstTime = UserDefaults.standard.bool(forKey: "firstTime")
+        if firstTime != true {
+            // Create inital data
+            UserDefaults.standard.set(true, forKey: "firstTime")
+            UserDefaults.standard.set("TODO", forKey: "title")
+            let startingItem = """
+            [
+                {"name": "Example Item", "deadline": "None"},
+                {"name": "Another Example Item", "deadline": "None"}
+            ]
+            """
+
+            UserDefaults.standard.set(startingItem, forKey: "todos")
+        }
+        
+        // Setup table
+        tableView.delegate = self
+        tableView.dataSource = self
+        tableView.dragDelegate = self
+        tableView.dragInteractionEnabled = true
+        
+        // NOTIFS
+        // refreshing table
+        NotificationCenter.default.addObserver(self, selector: #selector(refresh), name: Notification.Name("refresh"), object: nil)
+    }
+    
+    // Refresh
+    @objc func refresh (notification: NSNotification){
+        tableView.reloadData()
+    }
+    
+    // Getting view ready when returning from settings or add item
+    override func viewWillAppear(_ animated: Bool) {
+        let setTitle = UserDefaults.standard.string(forKey: "title")
+        titleText.text = setTitle
+        tableView.reloadData()
+    }
+    
+    // Dragging
+    func tableView(_ tableView: UITableView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
+        let todos = UserDefaults.standard.string(forKey: "todos")
+        let decoded = try! JSONDecoder().decode([Item].self, from: (todos?.data(using: .utf8))!)
+        let dragItem = UIDragItem(itemProvider: NSItemProvider())
+        dragItem.localObject = decoded[indexPath.row]
+        return [ dragItem ]
+    }
+    
+    // Dragging
+    func tableView(_ tableView: UITableView, moveRowAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
+        let todos = UserDefaults.standard.string(forKey: "todos")
+        var decoded = try! JSONDecoder().decode([Item].self, from: (todos?.data(using: .utf8))!)
+        let mover = decoded.remove(at: sourceIndexPath.row)
+        decoded.insert(mover, at: destinationIndexPath.row)
+    }
+    
+    // Number of rows in table
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        let todos = UserDefaults.standard.string(forKey: "todos")
+        let decoded = try! JSONDecoder().decode([Item].self, from: (todos?.data(using: .utf8))!)
+        return decoded.count
+    }
+    
+    // Setting up rows based off data
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let todos = UserDefaults.standard.string(forKey: "todos")
+        let decoded = try! JSONDecoder().decode([Item].self, from: (todos?.data(using: .utf8))!)
+        let cell = tableView.dequeueReusableCell(withIdentifier: "todoCell", for: indexPath)
+        cell.textLabel?.text = decoded[indexPath[1]].name
+        cell.detailTextLabel?.text = decoded[indexPath.row].deadline
+        return cell
+    }
+    
+    // Removing row
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            let todos = UserDefaults.standard.string(forKey: "todos")
+            var decoded = try! JSONDecoder().decode([Item].self, from: (todos?.data(using: .utf8))!)
+            decoded.remove(at: indexPath[1])
+            let encoded = try! JSONEncoder().encode(decoded)
+            UserDefaults.standard.set(String(decoding: encoded, as: UTF8.self), forKey: "todos")
+            tableView.deleteRows(at: [indexPath], with: .automatic)
+        }
+    }
+    
+    
+}
