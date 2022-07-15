@@ -24,8 +24,8 @@ class AddItemViewController: UIViewController, UITextFieldDelegate {
         // Make sure form is valid
         if name.text != "" {
             // Save item
-            guard var todos = UserDefaults.standard.string(forKey: "todos") else {return}
-            todos = todos.replacingOccurrences(of: "[", with: "").replacingOccurrences(of: "]", with: "")
+            guard let todos = UserDefaults.standard.string(forKey: Keys.todos) else {return}
+            var data = try! JSONDecoder().decode([Item].self, from: (todos.data(using: .utf8))!)
             var date = "None"
             var uuid = "None"
             // Format date (if toggled)
@@ -34,7 +34,6 @@ class AddItemViewController: UIViewController, UITextFieldDelegate {
                 formatter.dateFormat = "MMM d yyyy, h:mm a"
                 let formatteddate = formatter.string(from: picker.date)
                 date = formatteddate
-                
                 // Schedual notif
                 let content = UNMutableNotificationContent()
                 content.title = name.text!
@@ -48,24 +47,11 @@ class AddItemViewController: UIViewController, UITextFieldDelegate {
                 // Add
                 UNUserNotificationCenter.current().add(request)
             }
-            // Check whether it needs to append to old list of items or is first one
-            var newItems = ""
-            if todos == "" {
-                newItems = """
-                    [
-                        {"name": "\(name.text!)", "deadline": "\(date)", "uuid": "\(uuid)"}
-                    ]
-                """
-            } else {
-                newItems = """
-                    [
-                        \(todos),
-                        {"name": "\(name.text!)", "deadline": "\(date)", "uuid": "\(uuid)"}
-                    ]
-                """
-            }
+            data.append(Item(name: name.text!, deadline: date, uuid: uuid))
+            let encoded = try! JSONEncoder().encode(data)
+            let newItems = String(data: encoded, encoding: .utf8)!
             // Set data and return to home screen
-            UserDefaults.standard.set(String(newItems), forKey: "todos")
+            UserDefaults.standard.set(String(newItems), forKey: Keys.todos)
             // Refresh data on main screen
             NotificationCenter.default.post(name: Notification.Name("refresh"), object: nil)
             dismiss(animated: true)

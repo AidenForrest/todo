@@ -14,13 +14,13 @@ class SettingsViewController: UIViewController, UITextFieldDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Preload title
-        let prevTitle = UserDefaults.standard.string(forKey: "title")
+        let prevTitle = UserDefaults.standard.string(forKey: Keys.title)
         titleField.text = prevTitle
     }
     
     @IBAction func save(_ sender: Any) {
         // Set title based of input
-        UserDefaults.standard.set(titleField.text!, forKey: "title")
+        UserDefaults.standard.set(titleField.text!, forKey: Keys.title)
     }
     
     // Close keyboard when touching screen
