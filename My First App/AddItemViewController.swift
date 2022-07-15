@@ -31,7 +31,7 @@ class AddItemViewController: UIViewController, UITextFieldDelegate {
             // Format date (if toggled)
             if toggle.isOn {
                 let formatter = DateFormatter()
-                formatter.dateFormat = "MMM d yyyy, h:mm:ss a"
+                formatter.dateFormat = "MMM d yyyy, h:mm a"
                 let formatteddate = formatter.string(from: picker.date)
                 date = formatteddate
                 
@@ -64,7 +64,6 @@ class AddItemViewController: UIViewController, UITextFieldDelegate {
                     ]
                 """
             }
-            print(todos)
             // Set data and return to home screen
             UserDefaults.standard.set(String(newItems), forKey: "todos")
             // Refresh data on main screen
