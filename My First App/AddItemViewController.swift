@@ -8,7 +8,7 @@
 import UIKit
 import UserNotifications
 
-class AddItemViewController: UIViewController {
+class AddItemViewController: UIViewController, UITextFieldDelegate {
 
     @IBOutlet weak var picker: UIDatePicker!
     @IBOutlet weak var toggle: UISwitch!
@@ -16,6 +16,8 @@ class AddItemViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        // Config textfield to close
+        self.name.delegate = self
     }
     
     @IBAction func save(_ sender: Any) {
@@ -47,7 +49,7 @@ class AddItemViewController: UIViewController {
                 UNUserNotificationCenter.current().add(request)
             }
             // Check whether it needs to append to old list of items or is first one
-            var  newItems = ""
+            var newItems = ""
             if todos == "" {
                 newItems = """
                     [
@@ -92,7 +94,7 @@ class AddItemViewController: UIViewController {
     
     // Close keyboard when return pressed
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        textField.resignFirstResponder()
-        return true
+        self.view.endEditing(true)
+        return false
     }
 }
