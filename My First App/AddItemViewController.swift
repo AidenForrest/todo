@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import UserNotifications
 
 class AddItemViewController: UIViewController {
 
@@ -24,29 +25,44 @@ class AddItemViewController: UIViewController {
             guard var todos = UserDefaults.standard.string(forKey: "todos") else {return}
             todos = todos.replacingOccurrences(of: "[", with: "").replacingOccurrences(of: "]", with: "")
             var date = "None"
+            var uuid = "None"
             // Format date (if toggled)
             if toggle.isOn {
                 let formatter = DateFormatter()
                 formatter.dateFormat = "MMM d yyyy, h:mm:ss a"
                 let formatteddate = formatter.string(from: picker.date)
                 date = formatteddate
+                
+                // Schedual notif
+                let content = UNMutableNotificationContent()
+                content.title = name.text!
+                content.subtitle = "The deadline for this item has reached!"
+                content.sound = UNNotificationSound.default
+                // Trigger
+                uuid = UUID().uuidString
+                let triggerDate = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: picker.date )
+                let trigger = UNCalendarNotificationTrigger(dateMatching: triggerDate, repeats: false)
+                let request = UNNotificationRequest(identifier: uuid, content: content, trigger: trigger)
+                // Add
+                UNUserNotificationCenter.current().add(request)
             }
             // Check whether it needs to append to old list of items or is first one
             var  newItems = ""
             if todos == "" {
                 newItems = """
                     [
-                        {"name": "\(name.text!)", "deadline": "\(date)"}
+                        {"name": "\(name.text!)", "deadline": "\(date)", "uuid": "\(uuid)"}
                     ]
                 """
             } else {
                 newItems = """
                     [
                         \(todos),
-                        {"name": "\(name.text!)", "deadline": "\(date)"}
+                        {"name": "\(name.text!)", "deadline": "\(date)", "uuid": "\(uuid)"}
                     ]
                 """
             }
+            print(todos)
             // Set data and return to home screen
             UserDefaults.standard.set(String(newItems), forKey: "todos")
             // Refresh data on main screen

@@ -7,6 +7,7 @@
 
 import UIKit
 import Foundation
+import UserNotifications
 
 class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UITableViewDragDelegate {
 
@@ -21,6 +22,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         super.viewDidLoad()
         // Do any additional setup after loading the view.
         
+        // Request notif perms
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { success, error in
+            if let error = error  {
+                print(error.localizedDescription)
+            }
+        }
+        
         // Check if user is first time
         let firstTime = UserDefaults.standard.bool(forKey: "firstTime")
         if firstTime != true {
@@ -29,8 +37,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             UserDefaults.standard.set("TODO", forKey: "title")
             let startingItem = """
             [
-                {"name": "Example Item", "deadline": "None"},
-                {"name": "Another Example Item", "deadline": "None"}
+                {"name": "Example Item", "deadline": "None", "uuid": "None"},
+                {"name": "Another Example Item", "deadline": "None", "uuid": "None"}
             ]
             """
 
@@ -94,11 +102,21 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         return cell
     }
     
-    // Removing row
+    // Removing
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             let todos = UserDefaults.standard.string(forKey: "todos")
             var decoded = try! JSONDecoder().decode([Item].self, from: (todos?.data(using: .utf8))!)
+            let uuid = decoded[indexPath.row].uuid
+            UNUserNotificationCenter.current().getPendingNotificationRequests { (notificationRequests) in
+               var identifiers: [String] = []
+               for notification:UNNotificationRequest in notificationRequests {
+                   if notification.identifier == uuid {
+                      identifiers.append(notification.identifier)
+                   }
+               }
+               UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
+            }
             decoded.remove(at: indexPath[1])
             let encoded = try! JSONEncoder().encode(decoded)
             UserDefaults.standard.set(String(decoding: encoded, as: UTF8.self), forKey: "todos")
