@@ -13,6 +13,9 @@ class SettingsViewController: UIViewController, UITextFieldDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        // Preload title
+        let prevTitle = UserDefaults.standard.string(forKey: "title")
+        titleField.text = prevTitle
     }
     
     @IBAction func save(_ sender: Any) {
